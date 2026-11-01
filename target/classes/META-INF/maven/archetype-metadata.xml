@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archetype-descriptor xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.2.0 https://maven.apache.org/xsd/archetype-descriptor-1.2.0.xsd"
+    name="ssh"
+    xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <requiredProperties>
+    <!--
+      package 表示 Java 根包，不要写成 tech.zqxx.common。
+      模板内的源码会依次生成到 ${package}.common、${package}.common.entity 等包下。
+    -->
+    <requiredProperty key="package">
+      <defaultValue>tech.zqxx</defaultValue>
+    </requiredProperty>
+  </requiredProperties>
+
+  <fileSets>
+    <!-- Java 源码：源文件目录从 common/ 开始，packaged=true 会加上 package 路径 -->
+    <fileSet filtered="true" packaged="true" encoding="UTF-8">
+      <directory>src/main/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+
+    <!-- Spring XML 和 properties：需要把 ${package}、${artifactId} 替换为实际值 -->
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/main/resources</directory>
+      <includes>
+        <include>**/*.xml</include>
+        <include>**/*.properties</include>
+      </includes>
+    </fileSet>
+
+    <!-- YAML 中可能包含运行期属性，原样复制 -->
+    <fileSet filtered="false" encoding="UTF-8">
+      <directory>src/main/resources</directory>
+      <includes>
+        <include>**/*.yaml</include>
+      </includes>
+    </fileSet>
+
+    <!-- JSP/FreeMarker 中包含 ${...} 表达式，不能被 Archetype 过滤 -->
+    <fileSet filtered="false" encoding="UTF-8">
+      <directory>src/main/webapp</directory>
+      <includes>
+        <include>**/*</include>
+      </includes>
+    </fileSet>
+
+    <!-- 生成项目的说明文件 -->
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory></directory>
+      <includes>
+        <include>README.md</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</archetype-descriptor>

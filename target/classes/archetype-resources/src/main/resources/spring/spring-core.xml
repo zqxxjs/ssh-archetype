@@ -1,0 +1,145 @@
+#set( $symbol_pound = '#' )
+#set( $symbol_dollar = '$' )
+#set( $symbol_escape = '\' )
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<context:annotation-config />
+
+	<!-- 只扫描 Service/Repository/组件，Controller 交给 Spring MVC 子容器 -->
+	<context:component-scan base-package="${package}">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+	</context:component-scan>
+
+	<!-- ==================== 数据源 ==================== -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${symbol_dollar}{jdbc.driverClassName}" />
+		<property name="jdbcUrl" value="${symbol_dollar}{jdbc.url}" />
+		<property name="username" value="${symbol_dollar}{jdbc.username}" />
+		<property name="password" value="${symbol_dollar}{jdbc.password}" />
+		<property name="minimumIdle" value="${symbol_dollar}{jdbc.pool.minimumIdle}" />
+		<property name="maximumPoolSize" value="${symbol_dollar}{jdbc.pool.maximumPoolSize}" />
+		<property name="connectionTimeout" value="${symbol_dollar}{jdbc.pool.connectionTimeout}" />
+		<property name="idleTimeout" value="${symbol_dollar}{jdbc.pool.idleTimeout}" />
+		<property name="maxLifetime" value="${symbol_dollar}{jdbc.pool.maxLifetime}" />
+		<property name="poolName" value="${artifactId}-pool" />
+	</bean>
+
+	<!-- ==================== Hibernate ==================== -->
+	<!--
+		hibernateProps 在文件末尾按 Profile 定义：
+		每个数据库使用独立的 hibernate.cache.region_prefix，
+		避免切换数据源后命中另一个数据库写入 Redis 的二级缓存。
+	-->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.jpa.hibernate.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="hibernateProperties" ref="hibernateProps" />
+		<property name="packagesToScan" value="${package}" />
+	</bean>
+
+	<bean id="txMgr"
+		class="org.springframework.orm.jpa.hibernate.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<tx:annotation-driven transaction-manager="txMgr" />
+
+	<!-- ==================== Redis / Redisson ==================== -->
+	<!--
+		RedissonClient 由 props/redisson.yaml 创建，供 Spring Session 使用。
+		Hibernate 的 RedissonRegionFactory 会按 hibernate.properties 中的
+		hibernate.cache.redisson.config 自行创建另一个客户端。
+	-->
+	<bean id="redissonClient"
+		class="${package}.common.config.RedissonClientFactoryBean">
+		<property name="configLocation" value="classpath:props/redisson.yaml" />
+		<property name="lazyInitialization" value="false" />
+	</bean>
+
+	<bean id="redisConnectionFactory"
+		class="org.redisson.spring.data.connection.RedissonConnectionFactory">
+		<constructor-arg ref="redissonClient" />
+	</bean>
+
+	<!-- ==================== Jackson ==================== -->
+	<bean id="objectMapper" class="com.fasterxml.jackson.databind.ObjectMapper">
+		<property name="dateFormat">
+			<bean class="java.text.SimpleDateFormat">
+				<constructor-arg value="yyyy-MM-dd HH:mm:ss" />
+			</bean>
+		</property>
+		<property name="timeZone" value="Asia/Shanghai" />
+	</bean>
+
+	<bean id="genericJackson2JsonRedisSerializer"
+		class="org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer">
+		<constructor-arg ref="objectMapper" />
+	</bean>
+
+	<!-- 通用 RedisTemplate：key=String，value=Jackson JSON -->
+	<bean id="redisTemplate"
+		class="org.springframework.data.redis.core.RedisTemplate">
+		<property name="connectionFactory" ref="redisConnectionFactory" />
+		<property name="keySerializer">
+			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="hashKeySerializer">
+			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="valueSerializer" ref="genericJackson2JsonRedisSerializer" />
+		<property name="hashValueSerializer" ref="genericJackson2JsonRedisSerializer" />
+	</bean>
+
+	<!--
+		数据库配置按 Spring Profile 选择：
+		  默认（不指定） -> MariaDB，jdbc.properties
+		  -Dspring.profiles.active=pgsql     -> PostgreSQL，jdbc-pgsql.properties
+		  -Dspring.profiles.active=sqlserver -> SQL Server，jdbc-sqlserver.properties
+
+		注意：Spring 的 XSD 要求嵌套 <beans profile="..."> 必须是文档中最后出现的元素，
+		因此这些 profile 块必须放在所有普通 bean 之后。
+	-->
+	<beans profile="default | mariadb">
+		<context:property-placeholder
+			location="classpath:props/redis.properties,classpath:props/jdbc.properties"
+			file-encoding="UTF-8" />
+		<bean id="hibernateProps"
+			class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+			<property name="location" value="classpath:props/hibernate.properties" />
+		</bean>
+	</beans>
+
+	<beans profile="pgsql">
+		<context:property-placeholder
+			location="classpath:props/redis.properties,classpath:props/jdbc-pgsql.properties"
+			file-encoding="UTF-8" />
+		<bean id="hibernateProps"
+			class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+			<property name="location"
+				value="classpath:props/hibernate-pgsql.properties" />
+		</bean>
+	</beans>
+
+	<beans profile="sqlserver">
+		<context:property-placeholder
+			location="classpath:props/redis.properties,classpath:props/jdbc-sqlserver.properties"
+			file-encoding="UTF-8" />
+		<bean id="hibernateProps"
+			class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+			<property name="location"
+				value="classpath:props/hibernate-sqlserver.properties" />
+		</bean>
+	</beans>
+
+</beans>

@@ -1,0 +1,66 @@
+#set( $symbol_pound = '#' )
+#set( $symbol_dollar = '$' )
+#set( $symbol_escape = '\' )
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!--
+		Spring Session（Redis）：
+		SessionRepositoryFilter 通过 web.xml 中的 DelegatingFilterProxy 注册，
+		bean 名称必须为 springSessionRepositoryFilter。
+	-->
+	<bean id="sessionCookieSerializer"
+		class="org.springframework.session.web.http.DefaultCookieSerializer">
+		<property name="cookieName" value="${symbol_dollar}{spring.session.cookie-name}" />
+		<property name="cookiePath" value="/" />
+		<property name="useHttpOnlyCookie" value="true" />
+		<property name="useSecureCookie" value="${symbol_dollar}{spring.session.cookie-secure}" />
+		<property name="sameSite" value="${symbol_dollar}{spring.session.cookie-same-site}" />
+	</bean>
+
+	<bean id="sessionIdResolver"
+		class="org.springframework.session.web.http.CookieHttpSessionIdResolver">
+		<property name="cookieSerializer" ref="sessionCookieSerializer" />
+	</bean>
+
+	<!-- Session 使用 JDK 序列化，避免 JSON 反序列化时丢失 Session 属性类型 -->
+	<bean id="sessionRedisTemplate"
+		class="org.springframework.data.redis.core.RedisTemplate">
+		<property name="connectionFactory" ref="redisConnectionFactory" />
+		<property name="keySerializer">
+			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="hashKeySerializer">
+			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="valueSerializer">
+			<bean class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+		<property name="hashValueSerializer">
+			<bean class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+	</bean>
+
+	<bean id="sessionRepository"
+		class="org.springframework.session.data.redis.RedisSessionRepository">
+		<constructor-arg ref="sessionRedisTemplate" />
+		<!-- 纯 Spring 没有 Spring Boot 的 Duration 转换器，这里显式构造 Duration -->
+		<property name="defaultMaxInactiveInterval">
+			<bean class="java.time.Duration" factory-method="parse">
+				<constructor-arg value="${symbol_dollar}{spring.session.timeout}" />
+			</bean>
+		</property>
+		<property name="redisKeyNamespace" value="${symbol_dollar}{spring.session.namespace}" />
+		<property name="flushMode" value="ON_SAVE" />
+		<property name="saveMode" value="ON_SET_ATTRIBUTE" />
+	</bean>
+
+	<bean id="springSessionRepositoryFilter"
+		class="org.springframework.session.web.http.SessionRepositoryFilter">
+		<constructor-arg ref="sessionRepository" />
+		<property name="httpSessionIdResolver" ref="sessionIdResolver" />
+	</bean>
+
+</beans>

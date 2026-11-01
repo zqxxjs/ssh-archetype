@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>io.github.zqxxjs</groupId>
+	<artifactId>ssh-archetype</artifactId>
+	<version>1.0.0</version>
+	<packaging>maven-archetype</packaging>
+
+	<name>ssh-archetype</name>
+	<description>SSH scaffold Maven archetype: Spring MVC7.0.10 +
+		Hibernate7.4.14.Final + Redis session + Redisson 2nd-level cache</description>
+	<url>http://maven.apache.org</url>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>yourname</id>
+			<name>Your Name</name>
+			<email>you@example.com</email>
+			<organization>Your Organization</organization>
+			<organizationUrl>https://example.com</organizationUrl>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:
+			https://github.com/yourname/company-service-archetype.git</connection>
+		<developerConnection>
+			scm:git:ssh://git@github.com:yourname/company-service-archetype.git</developerConnection>
+		<url>https://github.com/yourname/company-service-archetype</url>
+		<tag>HEAD</tag>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.12.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<publishingServerId>central</publishingServerId>
+				</configuration>
+			</plugin>
+		</plugins>
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.archetype</groupId>
+				<artifactId>archetype-packaging</artifactId>
+				<version>3.4.1</version>
+			</extension>
+		</extensions>
+	</build>
+
+
+</project>

@@ -1,0 +1,20 @@
+# ============================================================
+# Redisson 配置
+# 同时被以下两处使用：
+#   1. Hibernate 二级缓存：hibernate.cache.redisson.config=props/redisson.yaml
+#   2. Spring Session：RedissonClientFactoryBean 加载本文件
+# ============================================================
+singleServerConfig:
+  address: "redis://127.0.0.1:6379"
+  database: 0
+  connectionMinimumIdleSize: 2
+  connectionPoolSize: 16
+  connectTimeout: 10000
+  timeout: 3000
+  retryAttempts: 3
+
+threads: 2
+nettyThreads: 2
+
+# Kryo5 适合 Hibernate 二级缓存中的复杂对象序列化
+codec: !<org.redisson.codec.Kryo5Codec> {}

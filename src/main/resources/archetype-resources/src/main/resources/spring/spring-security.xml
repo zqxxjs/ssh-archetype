@@ -1,0 +1,76 @@
+#set( $symbol_pound = '#' )
+#set( $symbol_dollar = '$' )
+#set( $symbol_escape = '\' )
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security https://www.springframework.org/schema/security/spring-security.xsd">
+
+	<!--
+		脚手架安全配置：
+		- 表单登录，不使用 JWT
+		- Session 由 Spring Session（Redis）保存
+		- 为便于本地调试关闭 CSRF；生产环境请改为 <security:csrf/>，
+		  并在登录/登出表单中提交 CSRF token
+	-->
+	<security:http use-expressions="true">
+		<security:csrf disabled="true" />
+
+		<security:intercept-url pattern="/login" access="permitAll" />
+		<security:intercept-url pattern="/" access="permitAll" />
+		<security:intercept-url pattern="/index" access="permitAll" />
+		<security:intercept-url pattern="/jsp" access="permitAll" />
+		<security:intercept-url pattern="/api/**" access="permitAll" />
+		<security:intercept-url pattern="/static/**" access="permitAll" />
+		<security:intercept-url pattern="/css/**" access="permitAll" />
+		<security:intercept-url pattern="/js/**" access="permitAll" />
+		<security:intercept-url pattern="/favicon.ico" access="permitAll" />
+		<security:intercept-url pattern="/error" access="permitAll" />
+		<security:intercept-url pattern="/**" access="hasRole('USER')" />
+
+		<security:form-login login-page="/login"
+			login-processing-url="/login"
+			default-target-url="/secure"
+			authentication-failure-url="/login?error"
+			username-parameter="username"
+			password-parameter="password" />
+
+		<security:logout logout-url="/logout"
+			logout-success-url="/login?logout"
+			invalidate-session="true" />
+	</security:http>
+
+	<!-- {noop} 表示明文密码，仅用于脚手架演示；生产请使用 bcrypt -->
+	<bean id="passwordEncoder"
+		class="org.springframework.security.crypto.factory.PasswordEncoderFactories"
+		factory-method="createDelegatingPasswordEncoder" />
+
+	<bean id="userDetailsService"
+		class="org.springframework.security.provisioning.InMemoryUserDetailsManager">
+		<constructor-arg>
+			<list>
+				<bean class="org.springframework.security.core.userdetails.User">
+					<constructor-arg value="admin" />
+					<constructor-arg value="{noop}admin123" />
+					<constructor-arg>
+						<list>
+							<bean
+								class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+								<constructor-arg value="ROLE_USER" />
+							</bean>
+						</list>
+					</constructor-arg>
+				</bean>
+			</list>
+		</constructor-arg>
+	</bean>
+
+	<security:authentication-manager>
+		<security:authentication-provider user-service-ref="userDetailsService">
+			<security:password-encoder ref="passwordEncoder" />
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+</beans>

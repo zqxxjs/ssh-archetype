@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archetype-catalog>
+  <archetypes>
+    <archetype>
+      <groupId>tech.zqxx</groupId>
+      <artifactId>ssh-archetype</artifactId>
+      <version>0.0.1</version>
+      <description>SSH scaffold: Spring MVC + Spring + Hibernate + Redis session + Redisson 2nd-level cache</description>
+    </archetype>
+  </archetypes>
+</archetype-catalog>
