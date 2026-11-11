@@ -6,7 +6,7 @@
 
 	<groupId>io.github.zqxxjs</groupId>
 	<artifactId>ssh-archetype</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.2</version>
 	<packaging>maven-archetype</packaging>
 
 	<name>ssh-archetype</name>
@@ -24,20 +24,20 @@
 
 	<developers>
 		<developer>
-			<id>yourname</id>
-			<name>Your Name</name>
-			<email>you@example.com</email>
-			<organization>Your Organization</organization>
+			<id>wantao</id>
+			<name>wantao</name>
+			<email>songwantao0908@gmail.com</email>
+			<organization>zqxxjs</organization>
 			<organizationUrl>https://example.com</organizationUrl>
 		</developer>
 	</developers>
 
 	<scm>
 		<connection>scm:git:
-			https://github.com/yourname/company-service-archetype.git</connection>
+			https://github.com/zqxxjs/ssh-archetype.git</connection>
 		<developerConnection>
-			scm:git:ssh://git@github.com:yourname/company-service-archetype.git</developerConnection>
-		<url>https://github.com/yourname/company-service-archetype</url>
+			scm:git:ssh://git@github.com:zqxxjs/ssh-archetype.git</developerConnection>
+		<url>https://github.com/zqxxjs/ssh-archetype.git</url>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -49,12 +49,27 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>3.2.7</version>
+				<executions>
+					<execution>
+						<id>sign</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
 				<groupId>org.sonatype.central</groupId>
 				<artifactId>central-publishing-maven-plugin</artifactId>
 				<version>0.12.0</version>
 				<extensions>true</extensions>
 				<configuration>
-					<publishingServerId>central</publishingServerId>
+					<publishingServerId>central-pub</publishingServerId>
 				</configuration>
 			</plugin>
 		</plugins>
